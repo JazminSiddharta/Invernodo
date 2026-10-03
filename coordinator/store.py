@@ -56,10 +56,10 @@ def get_nodes():
 
 # ---------- Tareas ----------
 
-def create_task(zone_id):
+def create_task(zone_id, task_id=None):
     with _lock:
         task = Task(
-            task_id=str(uuid.uuid4()),
+            task_id=task_id or str(uuid.uuid4()),
             zone_id=zone_id,
             created_at=time.time(),
         )
