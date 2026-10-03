@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-
+from shared.contracts import Result
 from coordinator import store
 
 app = FastAPI(title="Invernodo Coordinator")
@@ -75,3 +75,21 @@ def get_image(task_id: str):
     if not store.task_exists(task_id):
         raise HTTPException(status_code=404, detail="Tarea no existe")
     return FileResponse(store.image_path(task_id))
+
+@app.post("/tasks/{task_id}/result")
+def post_result(task_id: str, result: Result):
+    if result.task_id != task_id:
+        raise HTTPException(status_code=400, detail="task_id no coincide")
+    if not store.save_result(result):
+        raise HTTPException(status_code=404, detail="Tarea no existe")
+    return {"ok": True}
+
+
+@app.get("/results")
+def list_results():
+    return store.get_results()
+
+
+@app.get("/stats")
+def stats():
+    return store.get_stats()
