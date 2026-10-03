@@ -1,0 +1,58 @@
+# Fase 0: servicios vacíos que solo se quedan vivos.
+# El build usa la raíz del repo como contexto (context: ..) para que shared/ viaje dentro de cada imagen.
+
+services:
+  coordinator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: coordinator
+    ports:
+      - "8000:8000"
+
+  worker-1:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: worker
+    environment:
+      NODE_ID: nodo-1
+      COORDINATOR_URL: http://coordinator:8000
+    depends_on:
+      - coordinator
+
+  worker-2:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: worker
+    environment:
+      NODE_ID: nodo-2
+      COORDINATOR_URL: http://coordinator:8000
+    depends_on:
+      - coordinator
+
+  simulator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: simulator
+    environment:
+      COORDINATOR_URL: http://coordinator:8000
+    depends_on:
+      - coordinator
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: dashboard
+    environment:
+      COORDINATOR_URL: http://coordinator:8000
+    depends_on:
+      - coordinator
