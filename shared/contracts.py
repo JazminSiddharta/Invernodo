@@ -35,6 +35,7 @@ class Result(BaseModel):
     label: str          # una de las etiquetas de labels.json
     confidence: float   # entre 0 y 1
     latency_ms: float
+    completed_at: Optional[float] = None  # lo pone el coordinador al guardar
 
 
 class NodeInfo(BaseModel):

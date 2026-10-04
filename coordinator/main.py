@@ -62,6 +62,11 @@ async def create_task(file: UploadFile = File(...), zone_id: str = Form(...)):
     return {"task_id": task_id}
 
 
+@app.get("/tasks")
+def list_tasks():
+    return store.get_tasks()
+
+
 @app.post("/tasks/claim")
 def claim_task(body: ClaimRequest):
     task = store.claim_task(body.node_id)

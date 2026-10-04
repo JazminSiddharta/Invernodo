@@ -90,5 +90,14 @@ check("results tiene 1 resultado", len(r.json()) == 1)
 nodos = requests.get(BASE + "/nodes").json()
 check("el nodo suma 1 tarea hecha", nodos[0]["tasks_done"] == 1)
 
+
+tareas = requests.get(BASE + "/tasks").json()
+check("GET /tasks lista 1 tarea", len(tareas) == 1)
+check("la tarea quedó DONE con attempts 1", tareas[0]["status"] == "DONE" and tareas[0]["attempts"] == 1)
+
+resultados = requests.get(BASE + "/results").json()
+check("el resultado trae completed_at", resultados[0]["completed_at"] is not None)
+
+
 print()
 print("TODAS LAS PRUEBAS PASARON")

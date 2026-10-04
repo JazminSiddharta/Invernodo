@@ -84,6 +84,11 @@ def claim_task(node_id):
 def task_exists(task_id):
     with _lock:
         return task_id in _tasks
+    
+
+def get_tasks():
+    with _lock:
+        return list(_tasks.values())
 
 
 def save_result(result):
@@ -92,6 +97,7 @@ def save_result(result):
         task = _tasks.get(result.task_id)
         if task is None:
             return False
+        result.completed_at = time.time()  # la hora la pone el coordinador
         task.status = TaskStatus.DONE
         _results[result.task_id] = result
         node = _nodes.get(result.node_id)
