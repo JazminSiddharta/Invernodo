@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# shared/ viaja completo dentro de cada contenedor (nadie copia las constantes a otro lado)
+COPY shared/ /app/shared/
+RUN pip install --no-cache-dir -r /app/shared/requirements.txt
+
+# model/ (classify vive en model/inference.py): el worker lo importa
+COPY model/ /app/model/
+
+# Carpeta del servicio (coordinator, worker, simulator o dashboard), la define el compose
+ARG SERVICE
+COPY ${SERVICE}/ /app/${SERVICE}/
+RUN if [ -f /app/${SERVICE}/requirements.txt ]; then pip install --no-cache-dir -r /app/${SERVICE}/requirements.txt; fi
+
+# Fase 0: servicio "vacío", solo se queda vivo sin hacer nada
+CMD ["sleep", "infinity"]
