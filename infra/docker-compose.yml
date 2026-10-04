@@ -52,6 +52,8 @@ services:
       dockerfile: infra/Dockerfile.python
       args:
         SERVICE: dashboard
+    ports:
+      - "8501:8501"
     environment:
       COORDINATOR_URL: http://coordinator:8000
     depends_on:
