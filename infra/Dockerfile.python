@@ -8,10 +8,13 @@ ENV PYTHONPATH=/app
 COPY shared/ /app/shared/
 RUN pip install --no-cache-dir -r /app/shared/requirements.txt
 
-# Carpeta del servicio (coordinator, worker o simulator), la define el compose
+# model/ (classify vive en model/inference.py): el worker lo importa
+COPY model/ /app/model/
+
+# Carpeta del servicio (coordinator, worker, simulator o dashboard), la define el compose
 ARG SERVICE
 COPY ${SERVICE}/ /app/${SERVICE}/
 RUN if [ -f /app/${SERVICE}/requirements.txt ]; then pip install --no-cache-dir -r /app/${SERVICE}/requirements.txt; fi
 
-# Fase 0: servicio "vacio", solo se queda vivo sin hacer nada
+# Fase 0: servicio "vacío", solo se queda vivo sin hacer nada
 CMD ["sleep", "infinity"]
