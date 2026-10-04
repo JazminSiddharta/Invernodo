@@ -11,6 +11,13 @@
 | GET /nodes | dashboard | nada | lista de NodeInfo |
 | GET /results | dashboard | nada | lista de Result |
 | GET /stats | dashboard | nada | {"total_tasks", "pending", "assigned", "done", "failed", "nodes_alive", "nodes_dead"} |
+| GET /tasks | dashboard | nada | lista de Task (con status, attempts, assigned_to) |
 
 Todos los formatos (Task, Result, NodeInfo) están en `shared/contracts.py`.
 Las constantes están en `shared/config.py`. Nadie las copia a otro lado.
+
+
+## Notas
+
+- `Result.completed_at` lo llena el coordinador al guardar el resultado. El worker NO lo manda.
+- Los nodos nunca se borran: un nodo caído sigue en `GET /nodes` con `status: DEAD`.
