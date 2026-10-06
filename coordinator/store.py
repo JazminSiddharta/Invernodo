@@ -127,18 +127,20 @@ def get_tasks():
 
 
 def save_result(result):
-    """Guarda el resultado. Devuelve False si la tarea no existe."""
+    """Guarda el resultado. Devuelve 'saved', 'duplicate' o 'not_found'."""
     with _lock:
         task = _tasks.get(result.task_id)
         if task is None:
-            return False
+            return "not_found"
+        if task.status == TaskStatus.DONE:
+            return "duplicate"  # el primer resultado gana
         result.completed_at = time.time()  # la hora la pone el coordinador
         task.status = TaskStatus.DONE
         _results[result.task_id] = result
         node = _nodes.get(result.node_id)
         if node is not None:
             node.tasks_done += 1
-        return True
+        return "saved"
 
 
 def get_results():

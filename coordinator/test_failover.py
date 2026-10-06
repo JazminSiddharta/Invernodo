@@ -61,5 +61,17 @@ r = requests.post(BASE + "/tasks/" + task_id + "/result", json=resultado)
 check("nodo-b entrega el resultado", r.status_code == 200)
 check("la tarea termina en DONE", buscar_tarea(task_id)["status"] == "DONE")
 
+
+# nodo-a "revive" y manda su resultado tarde: debe ignorarse
+requests.post(BASE + "/nodes/nodo-a/heartbeat")
+tarde = dict(resultado, node_id="nodo-a")
+r = requests.post(BASE + "/tasks/" + task_id + "/result", json=tarde)
+check("resultado duplicado responde 200", r.status_code == 200)
+check("se marca como duplicado", r.json()["duplicate"] is True)
+nodos = {n["node_id"]: n for n in requests.get(BASE + "/nodes").json()}
+check("nodo-a no suma tareas por el duplicado", nodos["nodo-a"]["tasks_done"] == 0)
+check("nodo-b si suma su tarea", nodos["nodo-b"]["tasks_done"] == 1)
+
+
 print()
 print("FAILOVER OK: la tarea sobrevivio a la caida de un nodo")
