@@ -3,7 +3,7 @@ import time
 import uuid
 from pathlib import Path
 
-from shared.config import TASK_TIMEOUT_S
+from shared.config import HEARTBEAT_TIMEOUT_S, TASK_TIMEOUT_S
 from shared.contracts import NodeInfo, NodeStatus, Result, Task, TaskStatus
 
 # Carpeta donde se guardan las imágenes (no se sube a GitHub)
@@ -54,6 +54,18 @@ def get_nodes():
         return list(_nodes.values())
 
 
+def mark_dead_nodes():
+    """Marca DEAD a los nodos sin heartbeat reciente. Devuelve sus ids."""
+    with _lock:
+        ahora = time.time()
+        muertos = []
+        for node in _nodes.values():
+            if node.status == NodeStatus.ALIVE and ahora - node.last_heartbeat > HEARTBEAT_TIMEOUT_S:
+                node.status = NodeStatus.DEAD
+                muertos.append(node.node_id)
+        return muertos
+    
+    
 # ---------- Tareas ----------
 
 def create_task(zone_id, task_id=None):

@@ -1,13 +1,31 @@
+import threading
+import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
 from shared.contracts import Result
 from coordinator import store
 
-app = FastAPI(title="Invernodo Coordinator")
+
+def _vigilante():
+    """Cada segundo revisa si algún nodo dejó de avisar que sigue vivo."""
+    while True:
+        store.mark_dead_nodes()
+        time.sleep(1)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    threading.Thread(target=_vigilante, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Invernodo Coordinator", lifespan=lifespan)
 
 # Permite que el dashboard de JP pueda consultar esta API desde el navegador
 app.add_middleware(
