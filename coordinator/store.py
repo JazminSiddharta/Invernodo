@@ -3,7 +3,7 @@ import time
 import uuid
 from pathlib import Path
 
-from shared.config import HEARTBEAT_TIMEOUT_S, TASK_TIMEOUT_S
+from shared.config import HEARTBEAT_TIMEOUT_S, MAX_RETRIES, TASK_TIMEOUT_S
 from shared.contracts import NodeInfo, NodeStatus, Result, Task, TaskStatus
 
 # Carpeta donde se guardan las imágenes (no se sube a GitHub)
@@ -91,6 +91,29 @@ def claim_task(node_id):
         task.attempts += 1
         task.deadline = time.time() + TASK_TIMEOUT_S
         return task
+
+
+def reassign_tasks():
+    """Devuelve a PENDING las tareas cuyo nodo murió o cuyo plazo venció.
+    Si ya se agotaron los intentos, la tarea pasa a FAILED."""
+    with _lock:
+        ahora = time.time()
+        movidas = []
+        for task in _tasks.values():
+            if task.status != TaskStatus.ASSIGNED:
+                continue
+            nodo = _nodes.get(task.assigned_to)
+            nodo_muerto = nodo is not None and nodo.status == NodeStatus.DEAD
+            plazo_vencido = task.deadline is not None and ahora > task.deadline
+            if nodo_muerto or plazo_vencido:
+                if task.attempts >= MAX_RETRIES:
+                    task.status = TaskStatus.FAILED
+                else:
+                    task.status = TaskStatus.PENDING
+                task.assigned_to = None
+                task.deadline = None
+                movidas.append(task.task_id)
+        return movidas
 
 
 def task_exists(task_id):

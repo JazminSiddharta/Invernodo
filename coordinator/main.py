@@ -13,9 +13,10 @@ from coordinator import store
 
 
 def _vigilante():
-    """Cada segundo revisa si algún nodo dejó de avisar que sigue vivo."""
+    """Cada segundo: marca nodos muertos y reasigna sus tareas."""
     while True:
         store.mark_dead_nodes()
+        store.reassign_tasks()
         time.sleep(1)
 
 
