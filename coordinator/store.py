@@ -1,3 +1,5 @@
+import os
+import sqlite3
 import threading
 import time
 import uuid
@@ -10,13 +12,45 @@ from shared.contracts import NodeInfo, NodeStatus, Result, Task, TaskStatus
 IMAGES_DIR = Path("coordinator/data/images")
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-# El "cuaderno": todo vive en estos diccionarios (en memoria, por ahora)
-_tasks = {}    # task_id -> Task
-_nodes = {}    # node_id -> NodeInfo
-_results = {}  # task_id -> Result
+# Archivo de la base de datos. Para pruebas se usa ":memory:" (empieza vacía)
+DB_PATH = os.getenv("INVERNODO_DB", "coordinator/data/invernodo.db")
+if DB_PATH != ":memory:":
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-# Candado: evita que dos nodos modifiquen los datos al mismo tiempo
+# Candado: evita que dos hilos usen la base de datos al mismo tiempo
 _lock = threading.Lock()
+
+_db = sqlite3.connect(DB_PATH, check_same_thread=False)
+_db.row_factory = sqlite3.Row
+_db.executescript(
+    """
+    CREATE TABLE IF NOT EXISTS nodes (
+        node_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        last_heartbeat REAL NOT NULL,
+        tasks_done INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS tasks (
+        task_id TEXT PRIMARY KEY,
+        zone_id TEXT NOT NULL,
+        created_at REAL NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL,
+        assigned_to TEXT,
+        deadline REAL
+    );
+    CREATE TABLE IF NOT EXISTS results (
+        task_id TEXT PRIMARY KEY,
+        node_id TEXT NOT NULL,
+        zone_id TEXT NOT NULL,
+        label TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        latency_ms REAL NOT NULL,
+        completed_at REAL
+    );
+    """
+)
+_db.commit()
 
 
 def image_path(task_id):
@@ -27,45 +61,49 @@ def image_path(task_id):
 
 def register_node(node_id):
     with _lock:
-        node = _nodes.get(node_id)
-        if node is None:
-            _nodes[node_id] = NodeInfo(
-                node_id=node_id,
-                status=NodeStatus.ALIVE,
-                last_heartbeat=time.time(),
-            )
-        else:
-            node.status = NodeStatus.ALIVE
-            node.last_heartbeat = time.time()
+        _db.execute(
+            "INSERT INTO nodes (node_id, status, last_heartbeat) VALUES (?, ?, ?) "
+            "ON CONFLICT(node_id) DO UPDATE SET "
+            "status = excluded.status, last_heartbeat = excluded.last_heartbeat",
+            (node_id, NodeStatus.ALIVE.value, time.time()),
+        )
+        _db.commit()
 
 
 def heartbeat(node_id):
     with _lock:
-        node = _nodes.get(node_id)
-        if node is None:
-            return False
-        node.status = NodeStatus.ALIVE
-        node.last_heartbeat = time.time()
-        return True
+        cur = _db.execute(
+            "UPDATE nodes SET status = ?, last_heartbeat = ? WHERE node_id = ?",
+            (NodeStatus.ALIVE.value, time.time(), node_id),
+        )
+        _db.commit()
+        return cur.rowcount > 0
 
 
 def get_nodes():
     with _lock:
-        return list(_nodes.values())
+        filas = _db.execute("SELECT * FROM nodes ORDER BY rowid").fetchall()
+        return [NodeInfo(**dict(f)) for f in filas]
 
 
 def mark_dead_nodes():
     """Marca DEAD a los nodos sin heartbeat reciente. Devuelve sus ids."""
     with _lock:
-        ahora = time.time()
-        muertos = []
-        for node in _nodes.values():
-            if node.status == NodeStatus.ALIVE and ahora - node.last_heartbeat > HEARTBEAT_TIMEOUT_S:
-                node.status = NodeStatus.DEAD
-                muertos.append(node.node_id)
+        limite = time.time() - HEARTBEAT_TIMEOUT_S
+        filas = _db.execute(
+            "SELECT node_id FROM nodes WHERE status = ? AND last_heartbeat < ?",
+            (NodeStatus.ALIVE.value, limite),
+        ).fetchall()
+        muertos = [f["node_id"] for f in filas]
+        if muertos:
+            _db.executemany(
+                "UPDATE nodes SET status = ? WHERE node_id = ?",
+                [(NodeStatus.DEAD.value, n) for n in muertos],
+            )
+            _db.commit()
         return muertos
-    
-    
+
+
 # ---------- Tareas ----------
 
 def create_task(zone_id, task_id=None):
@@ -75,22 +113,32 @@ def create_task(zone_id, task_id=None):
             zone_id=zone_id,
             created_at=time.time(),
         )
-        _tasks[task.task_id] = task
+        _db.execute(
+            "INSERT INTO tasks (task_id, zone_id, created_at, attempts, status) "
+            "VALUES (?, ?, ?, 0, ?)",
+            (task.task_id, task.zone_id, task.created_at, TaskStatus.PENDING.value),
+        )
+        _db.commit()
         return task
 
 
 def claim_task(node_id):
     """Da la tarea PENDING más vieja al nodo. Devuelve None si no hay."""
     with _lock:
-        pendientes = [t for t in _tasks.values() if t.status == TaskStatus.PENDING]
-        if not pendientes:
+        fila = _db.execute(
+            "SELECT task_id FROM tasks WHERE status = ? ORDER BY created_at LIMIT 1",
+            (TaskStatus.PENDING.value,),
+        ).fetchone()
+        if fila is None:
             return None
-        task = min(pendientes, key=lambda t: t.created_at)
-        task.status = TaskStatus.ASSIGNED
-        task.assigned_to = node_id
-        task.attempts += 1
-        task.deadline = time.time() + TASK_TIMEOUT_S
-        return task
+        _db.execute(
+            "UPDATE tasks SET status = ?, assigned_to = ?, "
+            "attempts = attempts + 1, deadline = ? WHERE task_id = ?",
+            (TaskStatus.ASSIGNED.value, node_id, time.time() + TASK_TIMEOUT_S, fila["task_id"]),
+        )
+        _db.commit()
+        fila = _db.execute("SELECT * FROM tasks WHERE task_id = ?", (fila["task_id"],)).fetchone()
+        return Task(**dict(fila))
 
 
 def reassign_tasks():
@@ -98,66 +146,95 @@ def reassign_tasks():
     Si ya se agotaron los intentos, la tarea pasa a FAILED."""
     with _lock:
         ahora = time.time()
+        filas = _db.execute(
+            "SELECT * FROM tasks WHERE status = ?", (TaskStatus.ASSIGNED.value,)
+        ).fetchall()
         movidas = []
-        for task in _tasks.values():
-            if task.status != TaskStatus.ASSIGNED:
-                continue
-            nodo = _nodes.get(task.assigned_to)
-            nodo_muerto = nodo is not None and nodo.status == NodeStatus.DEAD
-            plazo_vencido = task.deadline is not None and ahora > task.deadline
+        for f in filas:
+            nodo = _db.execute(
+                "SELECT status FROM nodes WHERE node_id = ?", (f["assigned_to"],)
+            ).fetchone()
+            nodo_muerto = nodo is not None and nodo["status"] == NodeStatus.DEAD.value
+            plazo_vencido = f["deadline"] is not None and ahora > f["deadline"]
             if nodo_muerto or plazo_vencido:
-                if task.attempts >= MAX_RETRIES:
-                    task.status = TaskStatus.FAILED
+                if f["attempts"] >= MAX_RETRIES:
+                    nuevo = TaskStatus.FAILED.value
                 else:
-                    task.status = TaskStatus.PENDING
-                task.assigned_to = None
-                task.deadline = None
-                movidas.append(task.task_id)
+                    nuevo = TaskStatus.PENDING.value
+                _db.execute(
+                    "UPDATE tasks SET status = ?, assigned_to = NULL, deadline = NULL "
+                    "WHERE task_id = ?",
+                    (nuevo, f["task_id"]),
+                )
+                movidas.append(f["task_id"])
+        if movidas:
+            _db.commit()
         return movidas
 
 
 def task_exists(task_id):
     with _lock:
-        return task_id in _tasks
-    
+        fila = _db.execute("SELECT 1 FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
+        return fila is not None
+
 
 def get_tasks():
     with _lock:
-        return list(_tasks.values())
+        filas = _db.execute("SELECT * FROM tasks ORDER BY rowid").fetchall()
+        return [Task(**dict(f)) for f in filas]
 
 
 def save_result(result):
     """Guarda el resultado. Devuelve 'saved', 'duplicate' o 'not_found'."""
     with _lock:
-        task = _tasks.get(result.task_id)
-        if task is None:
+        fila = _db.execute(
+            "SELECT status FROM tasks WHERE task_id = ?", (result.task_id,)
+        ).fetchone()
+        if fila is None:
             return "not_found"
-        if task.status == TaskStatus.DONE:
+        if fila["status"] == TaskStatus.DONE.value:
             return "duplicate"  # el primer resultado gana
         result.completed_at = time.time()  # la hora la pone el coordinador
-        task.status = TaskStatus.DONE
-        _results[result.task_id] = result
-        node = _nodes.get(result.node_id)
-        if node is not None:
-            node.tasks_done += 1
+        _db.execute(
+            "INSERT OR REPLACE INTO results "
+            "(task_id, node_id, zone_id, label, confidence, latency_ms, completed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (result.task_id, result.node_id, result.zone_id, result.label,
+             result.confidence, result.latency_ms, result.completed_at),
+        )
+        _db.execute(
+            "UPDATE tasks SET status = ? WHERE task_id = ?",
+            (TaskStatus.DONE.value, result.task_id),
+        )
+        _db.execute(
+            "UPDATE nodes SET tasks_done = tasks_done + 1 WHERE node_id = ?",
+            (result.node_id,),
+        )
+        _db.commit()
         return "saved"
 
 
 def get_results():
     with _lock:
-        return list(_results.values())
+        filas = _db.execute("SELECT * FROM results ORDER BY rowid").fetchall()
+        return [Result(**dict(f)) for f in filas]
+
+
+def _contar(tabla, status):
+    return _db.execute(
+        "SELECT COUNT(*) FROM " + tabla + " WHERE status = ?", (status.value,)
+    ).fetchone()[0]
 
 
 def get_stats():
     with _lock:
-        tareas = list(_tasks.values())
-        nodos = list(_nodes.values())
+        total = _db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
         return {
-            "total_tasks": len(tareas),
-            "pending": sum(1 for t in tareas if t.status == TaskStatus.PENDING),
-            "assigned": sum(1 for t in tareas if t.status == TaskStatus.ASSIGNED),
-            "done": sum(1 for t in tareas if t.status == TaskStatus.DONE),
-            "failed": sum(1 for t in tareas if t.status == TaskStatus.FAILED),
-            "nodes_alive": sum(1 for n in nodos if n.status == NodeStatus.ALIVE),
-            "nodes_dead": sum(1 for n in nodos if n.status == NodeStatus.DEAD),
+            "total_tasks": total,
+            "pending": _contar("tasks", TaskStatus.PENDING),
+            "assigned": _contar("tasks", TaskStatus.ASSIGNED),
+            "done": _contar("tasks", TaskStatus.DONE),
+            "failed": _contar("tasks", TaskStatus.FAILED),
+            "nodes_alive": _contar("nodes", NodeStatus.ALIVE),
+            "nodes_dead": _contar("nodes", NodeStatus.DEAD),
         }
