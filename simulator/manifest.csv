@@ -1,0 +1,51 @@
+zone_id,label,carpeta_origen,archivo
+zona-1,sana,Tomato___healthy,f0a9bd86-99c9-45d9-afe1-ca6cf6bbcdd6___RS_HL 9722.JPG
+zona-1,sana,Tomato___healthy,0902aa8e-e4f7-4c29-b11a-b2b7f24fe61c___GH_HL Leaf 228.1.JPG
+zona-1,hongo,Tomato___Early_blight,3064e2fc-3a71-4a66-8cd1-dc76ebc0c2e6___RS_Erly.B 7345.JPG
+zona-1,hongo,Tomato___Septoria_leaf_spot,82eb6df4-cf2d-4fe8-8b3b-c2ddb8b5457e___Keller.St_CG 1995.JPG
+zona-1,plaga,Tomato___Spider_mites Two-spotted_spider_mite,200410b0-390d-406f-aa66-5573ec4d8e04___Com.G_SpM_FL 1214.JPG
+zona-1,plaga,Tomato___Spider_mites Two-spotted_spider_mite,c045a7cf-d267-4a35-ba73-4441c220072f___Com.G_SpM_FL 8762.JPG
+zona-1,virus,Tomato___Tomato_mosaic_virus,14c21616-aa9e-4d85-8aff-bdf7f4cf3720___PSU_CG 2079.JPG
+zona-1,virus,Tomato___Tomato_mosaic_virus,c44f307f-dd40-495d-abfa-e2f68dc31ff6___PSU_CG 2312.JPG
+zona-1,bacteria,Tomato___Bacterial_spot,247444c2-846f-4626-9c69-762c6f278538___GCREC_Bact.Sp 3452.JPG
+zona-1,bacteria,Tomato___Bacterial_spot,541eaa7a-3967-4c6a-8a5d-4c9a1ad1881d___UF.GRC_BS_Lab Leaf 9240.JPG
+zona-2,sana,Tomato___healthy,574dab67-daab-46c8-918f-beb10b427cd5___RS_HL 9974.JPG
+zona-2,sana,Tomato___healthy,20dd3c49-88a2-4317-a5ec-d2066d8d815e___RS_HL 0125.JPG
+zona-2,hongo,Tomato___Target_Spot,ac946977-3f2b-4500-8920-607173e37def___Com.G_TgS_FL 7901.JPG
+zona-2,hongo,Tomato___Target_Spot,df537b68-86d4-4bdb-9c92-1fee207aac5c___Com.G_TgS_FL 0941.JPG
+zona-2,plaga,Tomato___Spider_mites Two-spotted_spider_mite,72cfc263-4e0a-4540-b7b3-dbd9bc81868c___Com.G_SpM_FL 8834.JPG
+zona-2,plaga,Tomato___Spider_mites Two-spotted_spider_mite,2191359a-e985-4bf9-abe2-8f4e00685701___Com.G_SpM_FL 9645.JPG
+zona-2,virus,Tomato___Tomato_Yellow_Leaf_Curl_Virus,5a0b78a3-79c2-4c0b-a09a-27985172a050___YLCV_NREC 2413.JPG
+zona-2,virus,Tomato___Tomato_Yellow_Leaf_Curl_Virus,26b752ab-21d6-40d5-aaa2-9f3e2a6beeb8___YLCV_GCREC 5342.JPG
+zona-2,bacteria,Tomato___Bacterial_spot,8a496fba-9b07-47a4-a9b0-8f14f6715cec___GCREC_Bact.Sp 5659.JPG
+zona-2,bacteria,Tomato___Bacterial_spot,e7c9c9ed-9e51-4056-93c7-f1ddf74f2ebc___UF.GRC_BS_Lab Leaf 0945.JPG
+zona-3,sana,Tomato___healthy,4e690960-f6bb-43f6-b2e7-6ff3aaf81452___RS_HL 9823.JPG
+zona-3,sana,Tomato___healthy,2d02a0d6-0734-4ac7-957f-44f2a011fdc3___RS_HL 0375.JPG
+zona-3,hongo,Tomato___Septoria_leaf_spot,45c3dbbf-94eb-4e9e-9f09-b93609f6db7d___JR_Sept.L.S 2543.JPG
+zona-3,hongo,Tomato___Late_blight,b3094af3-490b-4cbe-806e-dc793a94a4fd___RS_Late.B 6490.JPG
+zona-3,plaga,Tomato___Spider_mites Two-spotted_spider_mite,79ae335e-dbb0-4bb0-8003-6dba7402cbd5___Com.G_SpM_FL 1302.JPG
+zona-3,plaga,Tomato___Spider_mites Two-spotted_spider_mite,529646d8-5a02-4db8-b693-dd8232dd189f___Com.G_SpM_FL 8592.JPG
+zona-3,virus,Tomato___Tomato_mosaic_virus,42896f16-bf4c-4db1-b488-08d830dff66b___PSU_CG 2341.JPG
+zona-3,virus,Tomato___Tomato_mosaic_virus,f7d8d2a1-2cc6-41e7-9626-76ddf51e7a8b___PSU_CG 2179.JPG
+zona-3,bacteria,Tomato___Bacterial_spot,7140eec5-60f1-49bb-a0dd-4cea65897848___UF.GRC_BS_Lab Leaf 9310.JPG
+zona-3,bacteria,Tomato___Bacterial_spot,58674fc9-434d-4afc-879e-712a24831266___GCREC_Bact.Sp 2991.JPG
+zona-4,sana,Tomato___healthy,d06e33fb-58bf-440f-9dbc-a1ceec9abaea___GH_HL Leaf 383.JPG
+zona-4,sana,Tomato___healthy,483659eb-d6da-4eb6-9106-cfe4240becbe___RS_HL 9895.JPG
+zona-4,hongo,Tomato___Leaf_Mold,9afdf72c-5e19-40bd-8035-daf70f1cf8ce___Crnl_L.Mold 6617.JPG
+zona-4,hongo,Tomato___Late_blight,c59952b7-66e1-484d-a2e2-d240e7b12680___GHLB2 Leaf 8553.JPG
+zona-4,plaga,Tomato___Spider_mites Two-spotted_spider_mite,1e2f0007-3bba-4d4c-b533-879a2be8ac04___Com.G_SpM_FL 9603.JPG
+zona-4,plaga,Tomato___Spider_mites Two-spotted_spider_mite,6a62f7da-c954-45df-b6c0-a679787750fa___Com.G_SpM_FL 1139.JPG
+zona-4,virus,Tomato___Tomato_Yellow_Leaf_Curl_Virus,57f23e68-d6cf-4ba5-8659-7c074253b1ae___UF.GRC_YLCV_Lab 01960.JPG
+zona-4,virus,Tomato___Tomato_Yellow_Leaf_Curl_Virus,1e23b687-67ac-466c-b14e-49f0fe717ac0___UF.GRC_YLCV_Lab 01647.JPG
+zona-4,bacteria,Tomato___Bacterial_spot,bea776af-8c63-4376-a7f2-7cbd0e15e743___GCREC_Bact.Sp 3631.JPG
+zona-4,bacteria,Tomato___Bacterial_spot,a342423d-7c62-4fcd-a9c6-d92d586b5023___GCREC_Bact.Sp 3754.JPG
+zona-5,sana,Tomato___healthy,24336aa8-a0ad-404e-9669-3661d9920aec___GH_HL Leaf 435.1.JPG
+zona-5,sana,Tomato___healthy,ef55e589-0ad8-4602-be35-e0ee6aa33b8a___GH_HL Leaf 300.JPG
+zona-5,hongo,Tomato___Early_blight,90b9c783-480b-4f9b-a97a-d632f60a8f24___RS_Erly.B 9566.JPG
+zona-5,hongo,Tomato___Leaf_Mold,c02f3863-3012-4f3a-873e-8003d73a54f9___Crnl_L.Mold 6520.JPG
+zona-5,plaga,Tomato___Spider_mites Two-spotted_spider_mite,6d855825-b3fb-4e2a-ab5c-ceb3b8b85e9f___Com.G_SpM_FL 1199.JPG
+zona-5,plaga,Tomato___Spider_mites Two-spotted_spider_mite,f0dcd911-4ac9-40c5-b430-e4522ae6e82b___Com.G_SpM_FL 9629.JPG
+zona-5,virus,Tomato___Tomato_mosaic_virus,0e56889c-7e80-49f3-8da3-3a437244e8fd___PSU_CG 2140.JPG
+zona-5,virus,Tomato___Tomato_Yellow_Leaf_Curl_Virus,709a8acc-35e1-450b-844c-46bbe6cab281___YLCV_NREC 0252.JPG
+zona-5,bacteria,Tomato___Bacterial_spot,7ee48c64-f951-4234-b514-380673bd7648___GCREC_Bact.Sp 6023.JPG
+zona-5,bacteria,Tomato___Bacterial_spot,88f0b60f-1758-449a-afee-16c95edc6355___GCREC_Bact.Sp 2979.JPG
