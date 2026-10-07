@@ -1,0 +1,28 @@
+# Prueba del simulador solo, con un coordinador falso (sin la API real).
+# Uso (desde la raíz del repo):
+#   docker compose -f infra/docker-compose.simulator.yml up --build --abort-on-container-exit --exit-code-from simulator
+
+services:
+  coordinator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: tests
+    command: ["python", "tests/fake_coordinator.py"]
+    environment:
+      HOST: 0.0.0.0
+    ports:
+      - "8000:8000"
+
+  simulator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: simulator
+    command: ["python", "-m", "simulator.main", "--intervalo", "0.1"]
+    environment:
+      COORDINATOR_URL: http://coordinator:8000
+    depends_on:
+      - coordinator

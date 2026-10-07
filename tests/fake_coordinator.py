@@ -5,11 +5,13 @@ Uso (desde la raíz del repo):
 Responde POST /tasks con un task_id y GET /stats con cuántas fotos recibió.
 """
 import json
+import os
 import re
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PUERTO = 8000
+HOST = os.getenv("HOST", "127.0.0.1")
 recibidas = []
 
 
@@ -46,5 +48,4 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     print(f"Coordinador falso escuchando en http://localhost:{PUERTO}")
-    ThreadingHTTPServer(("127.0.0.1", PUERTO), Handler).serve_forever()
-    
+    ThreadingHTTPServer((HOST, PUERTO), Handler).serve_forever()
