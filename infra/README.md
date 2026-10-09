@@ -1,13 +1,14 @@
 # infra (Jhonny)
 
-Docker para levantar todo el sistema Invernodo con un solo comando.
+Docker para levantar el sistema Invernodo con un solo comando.
 
 ## Qué hay aquí
 
-- `Dockerfile.python`: receta base con Python 3.11 para `coordinator`, `worker`, `simulator` y `dashboard`. Copia `shared/` y la carpeta del servicio.
-- `docker-compose.yml`: levanta 5 servicios: `coordinator`, `worker-1`, `worker-2`, `simulator` y `dashboard`.
+- `Dockerfile.python`: receta base con Python 3.11 para `coordinator`, `worker`, `simulator` y `dashboard`. Copia `shared/`, `model/` y la carpeta del servicio.
+- `docker-compose.yml`: levanta 5 servicios: `coordinator` (puerto 8000), `worker-1`, `worker-2`, `simulator` y `dashboard` (puerto 8501, Streamlit).
+- `docker-compose.simulator.yml`: prueba del simulador solo, con el coordinador falso de `tests/`.
 
-**Estado (Fase 0):** los servicios están vacíos y solo se quedan vivos (`sleep`). El código real de cada quien se conecta en las fases siguientes.
+**Estado (Fase 1):** en `docker-compose.yml` los servicios siguen vacíos y solo se quedan vivos (`sleep`). El código real de cada quien se conecta en la Fase 2.
 
 ## Requisitos
 
@@ -40,4 +41,4 @@ docker compose -f infra/docker-compose.yml down
 | worker-2 | `NODE_ID` | `nodo-2` |
 | worker-1, worker-2, simulator, dashboard | `COORDINATOR_URL` | `http://coordinator:8000` |
 
-El coordinador publica el puerto 8000. Las constantes (tiempos, reintentos) viven solo en `shared/config.py`.
+Las constantes (tiempos, reintentos) viven solo en `shared/config.py`.
