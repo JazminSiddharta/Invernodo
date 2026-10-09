@@ -1,10 +1,6 @@
-# model/requirements.txt - dependencias del modelo (Abi)
-#
-# Fase 0: el stub de classify solo usa la libreria estandar de Python,
-# por eso todavia no hay dependencias.
-#
-# Fase 1: aqui iran las versiones EXACTAS del modelo real, por ejemplo:
-#   tensorflow-cpu==X.Y.Z
-#   pillow==X.Y.Z
-#   numpy==X.Y.Z
-# Se fijan despues de entrenar, con la misma version de TensorFlow que en Colab.
+# model/requirements.txt - dependencias del modelo real (Abi)
+# Python 3.11. Versiones probadas con model/probar_classify.py.
+# Se usa tensorflow-cpu (sin GPU) para que la imagen de Docker pese menos.
+tensorflow-cpu==2.21.0
+keras==3.15.1
+numpy==2.4.6
