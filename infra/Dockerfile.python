@@ -8,7 +8,14 @@ ENV PYTHONPATH=/app
 COPY shared/ /app/shared/
 RUN pip install --no-cache-dir -r /app/shared/requirements.txt
 
-# model/ (classify vive en model/inference.py): el worker lo importa
+# Dependencias extra (solo los workers: TensorFlow). El compose pasa
+# EXTRA_REQUIREMENTS=model/requirements.txt; los demás servicios no instalan nada extra.
+# Se instalan antes de copiar el resto de model/ para que Docker reutilice esta capa.
+ARG EXTRA_REQUIREMENTS=""
+COPY model/requirements.txt /app/model/requirements.txt
+RUN if [ -n "${EXTRA_REQUIREMENTS}" ]; then pip install --no-cache-dir -r /app/${EXTRA_REQUIREMENTS}; fi
+
+# model/ (classify vive aquí): el worker lo importa. Los pesos NO van en la imagen, se montan como volumen
 COPY model/ /app/model/
 
 # Carpeta del servicio (coordinator, worker, simulator o dashboard), la define el compose
@@ -16,5 +23,5 @@ ARG SERVICE
 COPY ${SERVICE}/ /app/${SERVICE}/
 RUN if [ -f /app/${SERVICE}/requirements.txt ]; then pip install --no-cache-dir -r /app/${SERVICE}/requirements.txt; fi
 
-# Fase 0: servicio "vacío", solo se queda vivo sin hacer nada
+# Por defecto el servicio se queda vivo sin hacer nada; el compose pone el command real
 CMD ["sleep", "infinity"]
