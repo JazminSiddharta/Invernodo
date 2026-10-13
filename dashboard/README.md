@@ -24,8 +24,11 @@ En PowerShell:
 
 ```
 $env:USE_FAKE_DATA="0"
+$env:COORDINATOR_URL="http://127.0.0.1:8000"
 streamlit run dashboard/app.py
 ```
+
+En Windows usa `127.0.0.1` y no `localhost`: con `localhost` cada petición tarda ~2 s y la página parpadea.
 
 ## Archivos
 
