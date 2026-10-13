@@ -4,15 +4,16 @@ Docker para levantar el sistema Invernodo con un solo comando.
 
 ## Qué hay aquí
 
-- `Dockerfile.python`: receta base con Python 3.11 para `coordinator`, `worker`, `simulator` y `dashboard`. Copia `shared/`, `model/` y la carpeta del servicio.
-- `docker-compose.yml`: levanta 5 servicios: `coordinator` (puerto 8000), `worker-1`, `worker-2`, `simulator` y `dashboard` (puerto 8501, Streamlit).
+- `Dockerfile.python`: receta base con Python 3.11 para todos los servicios. Copia `shared/`, `model/` y la carpeta del servicio. TensorFlow se instala solo en los workers (`EXTRA_REQUIREMENTS`). `EXTRA_PIP` instala `requests` en el worker mientras no tenga su propio `requirements.txt` (arreglo temporal).
+- `Dockerfile.python.dockerignore`: deja fuera los pesos y las imágenes locales del coordinador.
+- `docker-compose.yml`: el sistema completo: `coordinator` (puerto 8000), `worker-1`, `worker-2`, `dashboard` (puerto 8501, Streamlit) y `simulator` (manda 100 fotos y termina).
 - `docker-compose.simulator.yml`: prueba del simulador solo, con el coordinador falso de `tests/`.
-
-**Estado (Fase 1):** en `docker-compose.yml` los servicios siguen vacíos y solo se quedan vivos (`sleep`). El código real de cada quien se conecta en la Fase 2.
+- `docker-compose.model-smoke.yml`: prueba de humo del modelo real dentro de Docker.
 
 ## Requisitos
 
 - Docker Desktop instalado y abierto (abajo a la izquierda debe decir "Engine running").
+- Los pesos `modelo_tomate_ft.keras` en `model/weights/` (se bajan de Google Drive, ver `model/README.md`; no van en Git). Si están en otra carpeta: `set WEIGHTS_DIR=C:\ruta\a\weights` antes de correr.
 
 ## Cómo correrlo
 
@@ -22,7 +23,10 @@ Desde la raíz del repo (la carpeta `Invernodo`):
 docker compose -f infra/docker-compose.yml up --build
 ```
 
-La primera vez tarda 1 a 3 minutos. Cuando termina, la terminal se queda quieta: es normal. En Docker Desktop > Containers debe aparecer el grupo `infra` con 5 contenedores.
+Orden de arranque: el coordinador (listo cuando responde `GET /stats`), luego los workers (cargan el modelo y se registran), el dashboard y el simulador, que manda 100 fotos y termina. Los demás servicios siguen corriendo.
+
+- Dashboard: http://localhost:8501
+- Coordinador: http://localhost:8000/stats (cuando `done` llega a 100, ya se procesaron todas)
 
 ## Cómo apagarlo
 
@@ -33,6 +37,8 @@ La primera vez tarda 1 a 3 minutos. Cuando termina, la terminal se queda quieta:
 docker compose -f infra/docker-compose.yml down
 ```
 
+Si un worker sale con código 137, a Docker le falta memoria: en Docker Desktop > Settings > Resources sube la memoria asignada.
+
 ## Variables de entorno
 
 | Servicio | Variable | Valor |
@@ -40,5 +46,6 @@ docker compose -f infra/docker-compose.yml down
 | worker-1 | `NODE_ID` | `nodo-1` |
 | worker-2 | `NODE_ID` | `nodo-2` |
 | worker-1, worker-2, simulator, dashboard | `COORDINATOR_URL` | `http://coordinator:8000` |
+| dashboard | `USE_FAKE_DATA` | `0` (lee del coordinador real) |
 
 Las constantes (tiempos, reintentos) viven solo en `shared/config.py`.
