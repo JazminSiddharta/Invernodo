@@ -2,8 +2,9 @@
 import os
 import requests
 import time
-import random
 import threading
+
+from model.inference_real import cargar_modelo, classify
 
 NODE_ID = os.getenv("NODE_ID", "nodo-angie")
 COORDINATOR_URL = os.getenv(
@@ -124,30 +125,31 @@ def clasificar_imagen(imagen):
         print("No se puede clasificar una imagen vacía.")
         return None
 
-    etiquetas = ["sana", "hongo", "plaga", "virus", "bacteria"]
-
     inicio = time.perf_counter()
 
-    etiqueta = random.choice(etiquetas)
-    confianza = round(random.uniform(0.70, 0.99), 4)
+    try:
+        prediccion = classify(imagen)
 
-    latencia = round(
-        (time.perf_counter() - inicio) * 1000,
-        2
-    )
+        latencia = round(
+            (time.perf_counter() - inicio) * 1000,
+            2
+        )
 
-    resultado = {
-        "label": etiqueta,
-        "confidence": confianza,
-        "latency_ms": latencia
-    }
+        resultado = {
+            "label": prediccion["label"],
+            "confidence": float(prediccion["confidence"]),
+            "latency_ms": latencia
+        }
 
-    print(f"Clasificación simulada: {etiqueta}")
-    print(f"Confianza simulada: {confianza}")
-    print(f"Latencia: {latencia} ms")
+        print(f"Clasificación real: {resultado['label']}")
+        print(f"Confianza: {resultado['confidence']}")
+        print(f"Latencia: {latencia} ms")
 
-    return resultado
+        return resultado
 
+    except Exception as error:
+        print(f"Error al clasificar imagen: {error}")
+        return None
 
 def enviar_resultado(tarea, clasificacion):
     if not tarea or not clasificacion:
@@ -215,13 +217,23 @@ def procesar_tarea():
 
 
 def ciclo_heartbeat(detener):
-    while not detener.wait(10):
+    while not detener.wait(2):
         enviar_heartbeat()
 
 
 if __name__ == "__main__":
     print(f"Iniciando Worker: {NODE_ID}")
     print(f"Coordinador: {COORDINATOR_URL}")
+
+    print("Cargando modelo de TensorFlow...")
+
+    try:
+        cargar_modelo()
+        print("Modelo cargado correctamente.")
+
+    except Exception as error:
+        print(f"Error al cargar el modelo: {error}")
+        raise SystemExit(1)
 
     if registrar_worker():
         print("Worker registrado. Iniciando procesamiento...")
