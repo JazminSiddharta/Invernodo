@@ -1,0 +1,21 @@
+# Prueba de humo del modelo real dentro de la imagen del worker (con TensorFlow).
+# Uso (desde la raíz del repo, con los pesos en model/weights/):
+#   docker compose -f infra/docker-compose.model-smoke.yml build
+#   docker compose -f infra/docker-compose.model-smoke.yml run --rm model-smoke
+# Si los pesos están en otra carpeta: set WEIGHTS_DIR=C:\ruta\a\weights (Command Prompt)
+
+services:
+  model-smoke:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.python
+      args:
+        SERVICE: worker
+        EXTRA_REQUIREMENTS: model/requirements.txt
+    command: ["python", "tests/smoke_model.py"]
+    volumes:
+      - ${WEIGHTS_DIR:-../model/weights}:/app/model/weights:ro
+      - ../tests:/app/tests:ro
+      - ../simulator/sample_images:/app/simulator/sample_images:ro
+      - ../simulator/manifest.csv:/app/simulator/manifest.csv:ro
+      
