@@ -15,6 +15,10 @@ ARG EXTRA_REQUIREMENTS=""
 COPY model/requirements.txt /app/model/requirements.txt
 RUN if [ -n "${EXTRA_REQUIREMENTS}" ]; then pip install --no-cache-dir -r /app/${EXTRA_REQUIREMENTS}; fi
 
+# Paquetes sueltos (arreglo temporal: el worker aún no tiene requirements.txt). Se pasan por EXTRA_PIP desde el compose.
+ARG EXTRA_PIP=""
+RUN if [ -n "${EXTRA_PIP}" ]; then pip install --no-cache-dir ${EXTRA_PIP}; fi
+
 # model/ (classify vive aquí): el worker lo importa. Los pesos NO van en la imagen, se montan como volumen
 COPY model/ /app/model/
 
