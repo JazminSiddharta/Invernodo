@@ -5,7 +5,9 @@ Correr desde la raíz del repo:
 """
 
 import sys
+import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 # Permite "from shared..." y "from dashboard..." corriendo desde cualquier carpeta.
@@ -23,6 +25,7 @@ from dashboard import alerts, data_source  # noqa: E402
 from shared.config import COORDINATOR_URL  # noqa: E402
 
 REFRESH_S = 2
+TZ = ZoneInfo(os.getenv("DASHBOARD_TZ", "America/Mexico_City"))
 
 # Mismo orden que shared/labels.json. "sana" en verde, problemas en tonos cálidos.
 LABEL_COLORS = {
@@ -37,7 +40,7 @@ st.set_page_config(page_title="Invernodo", page_icon="🌿", layout="wide")
 
 
 def fmt_time(ts: float | None) -> str:
-    return datetime.fromtimestamp(ts).strftime("%H:%M:%S") if ts else "—"
+    return datetime.fromtimestamp(ts, TZ).strftime("%H:%M:%S") if ts else "—"
 
 
 @st.fragment(run_every=REFRESH_S)
