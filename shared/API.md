@@ -21,3 +21,4 @@ Las constantes están en `shared/config.py`. Nadie las copia a otro lado.
 
 - `Result.completed_at` lo llena el coordinador al guardar el resultado. El worker NO lo manda.
 - Los nodos nunca se borran: un nodo caído sigue en `GET /nodes` con `status: DEAD`.
+- Si llega otra vez el resultado de una tarea que ya estaba DONE, el coordinador responde 200 con `{"ok": true, "duplicate": true}` (gana el primero). No es un error.
