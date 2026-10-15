@@ -2,7 +2,7 @@ import sys
 
 import requests
 
-BASE = "http://localhost:8000"
+BASE = "http://127.0.0.1:8000"
 NODE = "nodo-test"
 ZONA = "zona-test"
 IMAGEN = b"bytes-de-imagen-falsa"
@@ -79,6 +79,9 @@ r = requests.post(BASE + "/tasks/inventado/result", json=fantasma)
 check("resultado de tarea inexistente responde 404", r.status_code == 404)
 
 # 7. Lecturas
+# El nodo debe seguir vivo: avisamos justo antes de revisar los stats
+r = requests.post(BASE + "/nodes/" + NODE + "/heartbeat")
+check("heartbeat antes de los stats responde 200", r.status_code == 200)
 stats = requests.get(BASE + "/stats").json()
 check("stats: total_tasks es 1", stats["total_tasks"] == 1)
 check("stats: done es 1", stats["done"] == 1)

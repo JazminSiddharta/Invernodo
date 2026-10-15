@@ -1,13 +1,32 @@
+import threading
+import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
 from shared.contracts import Result
 from coordinator import store
 
-app = FastAPI(title="Invernodo Coordinator")
+
+def _vigilante():
+    """Cada segundo: marca nodos muertos y reasigna sus tareas."""
+    while True:
+        store.mark_dead_nodes()
+        store.reassign_tasks()
+        time.sleep(1)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    threading.Thread(target=_vigilante, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Invernodo Coordinator", lifespan=lifespan)
 
 # Permite que el dashboard de JP pueda consultar esta API desde el navegador
 app.add_middleware(
@@ -85,9 +104,10 @@ def get_image(task_id: str):
 def post_result(task_id: str, result: Result):
     if result.task_id != task_id:
         raise HTTPException(status_code=400, detail="task_id no coincide")
-    if not store.save_result(result):
+    estado = store.save_result(result)
+    if estado == "not_found":
         raise HTTPException(status_code=404, detail="Tarea no existe")
-    return {"ok": True}
+    return {"ok": True, "duplicate": estado == "duplicate"}
 
 
 @app.get("/results")

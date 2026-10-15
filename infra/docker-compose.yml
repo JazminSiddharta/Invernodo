@@ -1,5 +1,24 @@
-# Fase 0: servicios vacíos que solo se quedan vivos.
+# Sistema Invernodo (Fase 2): coordinador, 2 workers con el modelo, dashboard y simulador.
+# Uso (desde la raíz del repo, con los pesos del modelo en model/weights/):
+#   docker compose -f infra/docker-compose.yml up --build
+# Si los pesos están en otra carpeta: set WEIGHTS_DIR=C:\ruta\a\weights (Command Prompt)
 # El build usa la raíz del repo como contexto (context: ..) para que shared/ viaje dentro de cada imagen.
+
+x-worker: &worker
+  image: invernodo-worker
+  build:
+    context: ..
+    dockerfile: infra/Dockerfile.python
+    args:
+      SERVICE: worker
+      EXTRA_REQUIREMENTS: model/requirements.txt
+      EXTRA_PIP: "requests==2.32.3"
+  command: ["python", "worker/main.py"]
+  volumes:
+    - ${WEIGHTS_DIR:-../model/weights}:/app/model/weights:ro
+  depends_on:
+    coordinator:
+      condition: service_healthy
 
 services:
   coordinator:
@@ -8,32 +27,28 @@ services:
       dockerfile: infra/Dockerfile.python
       args:
         SERVICE: coordinator
+    command: ["uvicorn", "coordinator.main:app", "--host", "0.0.0.0", "--port", "8000"]
     ports:
       - "8000:8000"
+    volumes:
+      - coordinator-data:/app/coordinator/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/stats')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
   worker-1:
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile.python
-      args:
-        SERVICE: worker
+    <<: *worker
     environment:
       NODE_ID: nodo-1
       COORDINATOR_URL: http://coordinator:8000
-    depends_on:
-      - coordinator
 
   worker-2:
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile.python
-      args:
-        SERVICE: worker
+    <<: *worker
     environment:
       NODE_ID: nodo-2
       COORDINATOR_URL: http://coordinator:8000
-    depends_on:
-      - coordinator
 
   simulator:
     build:
@@ -41,10 +56,12 @@ services:
       dockerfile: infra/Dockerfile.python
       args:
         SERVICE: simulator
+    command: ["python", "-m", "simulator.main", "--veces", "2", "--intervalo", "0.2"]
     environment:
       COORDINATOR_URL: http://coordinator:8000
     depends_on:
-      - coordinator
+      coordinator:
+        condition: service_healthy
 
   dashboard:
     build:
@@ -52,9 +69,15 @@ services:
       dockerfile: infra/Dockerfile.python
       args:
         SERVICE: dashboard
+    command: ["streamlit", "run", "dashboard/app.py", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true"]
     ports:
       - "8501:8501"
     environment:
       COORDINATOR_URL: http://coordinator:8000
+      USE_FAKE_DATA: "0"
     depends_on:
-      - coordinator
+      coordinator:
+        condition: service_healthy
+
+volumes:
+  coordinator-data:
