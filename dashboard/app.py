@@ -5,7 +5,10 @@ Correr desde la raíz del repo:
 """
 
 import sys
+import html
+import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 # Permite "from shared..." y "from dashboard..." corriendo desde cualquier carpeta.
@@ -24,6 +27,9 @@ from shared.config import COORDINATOR_URL  # noqa: E402
 
 REFRESH_S = 2
 
+# Horas en hora de México aunque el contenedor esté en UTC.
+TZ = ZoneInfo(os.getenv("DASHBOARD_TZ", "America/Mexico_City"))
+
 # Mismo orden que shared/labels.json. "sana" en verde, problemas en tonos cálidos.
 LABEL_COLORS = {
     "sana": "#2e9e5b",
@@ -37,7 +43,14 @@ st.set_page_config(page_title="Invernodo", page_icon="🌿", layout="wide")
 
 
 def fmt_time(ts: float | None) -> str:
-    return datetime.fromtimestamp(ts).strftime("%H:%M:%S") if ts else "—"
+    return datetime.fromtimestamp(ts, TZ).strftime("%H:%M:%S") if ts else "—"
+
+
+def _alert_html(a) -> str:
+    bg, fg = ("#4a1d1f", "#ff8a8a") if a.level == "ZONA" else ("#3d3d14", "#f5e79e")
+    return (f'<div style="background:{bg};color:{fg};padding:12px 16px;border-radius:8px;'
+            f'margin-bottom:10px;line-height:1.4"><b>{html.escape(a.level)}</b> · '
+            f'{html.escape(a.message)} · {fmt_time(a.when)}</div>')
 
 
 @st.fragment(run_every=REFRESH_S)
@@ -86,8 +99,10 @@ def render() -> None:
         found = alerts.compute(results, now)
         if not found:
             st.success("Sin alertas.")
-        for a in found[:8]:
-            (st.error if a.level == "ZONA" else st.warning)(f"**{a.level}** · {a.message} · {fmt_time(a.when)}")
+        else:
+            # Todas las alertas en UN solo bloque: si cada una fuera su propia caja,
+            # Streamlit puede mezclar cajas viejas y nuevas al actualizarse cada 2 s.
+            st.markdown("".join(_alert_html(a) for a in found[:8]), unsafe_allow_html=True)
         if len(found) > 8:
             st.caption(f"+{len(found) - 8} alertas más")
 
