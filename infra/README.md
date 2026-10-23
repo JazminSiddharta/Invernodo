@@ -4,7 +4,7 @@ Docker para levantar el sistema Invernodo con un solo comando.
 
 ## Qué hay aquí
 
-- `Dockerfile.python`: receta base con Python 3.11 para todos los servicios. Copia `shared/`, `model/` y la carpeta del servicio. TensorFlow se instala solo en los workers (`EXTRA_REQUIREMENTS`). `EXTRA_PIP` instala `requests` en el worker mientras no tenga su propio `requirements.txt` (arreglo temporal).
+- `Dockerfile.python`: receta base con Python 3.11 para todos los servicios. Copia `shared/`, `model/` y la carpeta del servicio. TensorFlow se instala solo en los workers (`EXTRA_REQUIREMENTS`).
 - `Dockerfile.python.dockerignore`: deja fuera los pesos y las imágenes locales del coordinador.
 - `docker-compose.yml`: el sistema completo: `coordinator` (puerto 8000), `worker-1`, `worker-2`, `dashboard` (puerto 8501, Streamlit) y `simulator` (manda 100 fotos y termina).
 - `docker-compose.simulator.yml`: prueba del simulador solo, con el coordinador falso de `tests/`.
