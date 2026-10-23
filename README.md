@@ -32,7 +32,7 @@ Cada carpeta tiene su propio README con más detalle.
    cd Invernodo
 ```
 
-2. Crear la carpeta `model/weights/` y poner dentro `modelo_tomate_ft.keras`. Debe quedar así: `model/weights/modelo_tomate_ft.keras`.
+2. **Descargar los pesos del modelo** (no vienen en Git): entra al Drive (el enlace está en `model/README.md`), baja `modelo_tomate_ft.keras`, crea la carpeta `model/weights/` y ponlo dentro. Debe quedar así: `model/weights/modelo_tomate_ft.keras`. **Sin este archivo los workers no arrancan** (salen con "Falta el modelo") y el dashboard muestra 0 nodos y todas las tareas pendientes.
 
 3. Levantar todo, desde la raíz del repo:
 
@@ -73,6 +73,7 @@ Más detalle en `tests/README.md`.
 - **Un contenedor sale con código 137:** a Docker le falta memoria. En Docker Desktop > Settings > Resources sube la memoria asignada.
 - **Un puerto está ocupado** (8000 u 8501): cierra el programa que lo usa, o apaga una corrida anterior con el `down -v` de arriba.
 - **Los números no empiezan en cero:** quedó estado de una corrida anterior. Apaga con `down -v`.
+- **Creaste `model/weights/` con los contenedores ya corriendo:** un restart no lo toma. Apaga con `docker compose -f infra/docker-compose.yml down -v` y vuelve a levantar con `up --build`.
 
 ## Equipo
 
