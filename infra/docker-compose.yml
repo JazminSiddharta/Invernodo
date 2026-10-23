@@ -12,7 +12,6 @@ x-worker: &worker
     args:
       SERVICE: worker
       EXTRA_REQUIREMENTS: model/requirements.txt
-      EXTRA_PIP: "requests==2.32.3"
   command: ["python", "worker/main.py"]
   volumes:
     - ${WEIGHTS_DIR:-../model/weights}:/app/model/weights:ro
